@@ -3,6 +3,11 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 from openai import OpenAI
 import httpx
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 # Create a more robust HTTP client with SSL configuration
 http_client = httpx.Client(
@@ -12,7 +17,7 @@ http_client = httpx.Client(
 )
 
 client = OpenAI(
-    api_key="sk-5MOyzg2xQQiJT1uYcZ9Tzg",
+    api_key=os.getenv("NAVIGATE_API_KEY"),
     base_url="https://apidev.navigatelabsai.com/",
     http_client=http_client
 )
@@ -45,7 +50,7 @@ def record_audio(filename="question.wav"):
             audio_chunk, _ = stream.read(CHUNK_SIZE)
 
             volume = np.linalg.norm(audio_chunk)
-            print("Volume:", volume) 
+            # print("Volume:", volume) 
 
             # detect speech start
             if volume > VOICE_THRESHOLD:

@@ -1,7 +1,12 @@
 import os
 import json
-from pathlib import Path
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+
+from pathlib import Path
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -23,7 +28,7 @@ http_client = httpx.Client(
 )
 
 client = OpenAI(
-    api_key="sk-5MOyzg2xQQiJT1uYcZ9Tzg",
+    api_key=os.getenv("NAVIGATE_API_KEY"),
     base_url="https://apidev.navigatelabsai.com/",
     http_client=http_client
 )
