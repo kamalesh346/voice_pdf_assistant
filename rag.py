@@ -1,11 +1,10 @@
 import os
 import json
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-
+from tts import speak
 from pathlib import Path
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -159,12 +158,57 @@ def save_conversation(pdf_name, memory):
 # ---------------------------
 # LLM RESPONSE GENERATION
 # ---------------------------
-def generate_answer(question, context, memory):
+# def generate_answer_stream(question, context, memory):
+
+#     prompt = f"""
+# Answer ONLY using the provided context.
+# If answer is not found say:
+# 'I could not find this information in the document.'
+
+# Context:
+# {context}
+# """
+
+#     memory.append({"role": "user", "content": question})
+
+#     recent_memory = memory[-4:]
+
+#     stream = client.chat.completions.create(
+#         model="gpt-4.1-nano",
+#         messages=recent_memory + [{"role": "user", "content": prompt}],
+#         stream=True
+#     )
+
+#     full_text = ""
+#     sentence_buffer = ""
+
+#     for chunk in stream:
+
+#         delta = chunk.choices[0].delta
+
+#         if delta and delta.content:
+
+#             token = delta.content
+
+#             print(token, end="", flush=True)
+
+#             full_text += token
+#             sentence_buffer += token
+
+#             # speak once a sentence finishes
+#             if any(p in sentence_buffer for p in [". ", "! ", "? "]):
+#                 speak(sentence_buffer.strip())
+#                 sentence_buffer = ""
+
+#     memory.append({"role": "assistant", "content": full_text})
+
+#     return full_text
+def generate_answer_stream(question, context, memory):
 
     prompt = f"""
 Answer ONLY using the provided context.
-If the answer is not present, say:
-"I could not find this information in the document."
+If answer is not found say:
+'I could not find this information in the document.'
 
 Context:
 {context}
@@ -172,26 +216,38 @@ Context:
 
     memory.append({"role": "user", "content": question})
 
-    # keep last few turns only (reduces latency)
     recent_memory = memory[-4:]
 
-    # Add retry logic and error handling
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            response = client.chat.completions.create(
-                model="gpt-4.1-nano",
-                messages=recent_memory + [{"role": "user", "content": prompt}]
-            )
-            answer = response.choices[0].message.content
-            break
-        except Exception as e:
-            print(f"Attempt {attempt + 1} failed: {str(e)}")
-            if attempt == max_retries - 1:
-                return "Sorry, I'm having trouble connecting to the AI service right now. Please check your internet connection and try again later."
-            import time
-            time.sleep(2)  # Wait 2 seconds before retry
+    stream = client.chat.completions.create(
+        model="gpt-4.1-nano",
+        messages=recent_memory + [{"role": "user", "content": prompt}],
+        stream=True
+    )
 
-    memory.append({"role": "assistant", "content": answer})
+    full_text = ""
+    sentence_buffer = ""
 
-    return answer
+    for chunk in stream:
+
+        delta = chunk.choices[0].delta
+
+        if delta and delta.content:
+
+            token = delta.content
+
+            print(token, end="", flush=True)
+
+            full_text += token
+            sentence_buffer += token
+
+            # detect sentence ending
+            if any(p in token for p in [".", "!", "?"]):
+
+                speak(sentence_buffer.strip())
+                sentence_buffer = ""
+
+    if sentence_buffer.strip():
+        speak(sentence_buffer.strip())
+
+    memory.append({"role": "assistant", "content": full_text})
+    return full_text
