@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
+interrupt_requested = False
 http_client = httpx.Client(
     timeout=httpx.Timeout(60.0, read=30.0),
     verify=False,
@@ -31,15 +31,21 @@ speech_queue = queue.Queue()
 def audio_worker():
     """Continuously plays audio from queue"""
 
+    global interrupt_requested
+
     while True:
 
         text = speech_queue.get()
+
+        if interrupt_requested:
+            interrupt_requested = False
+            continue
 
         if text is None:
             break
 
         try:
-            # print("Speaking:", text)  # debug print
+            print("Speaking:", text)  # debug print
             response = client.audio.speech.create(
                 model="gpt-4o-mini-tts",
                 voice="alloy",
@@ -62,6 +68,23 @@ def audio_worker():
 # Start background audio thread
 threading.Thread(target=audio_worker, daemon=True).start()
 
+def interrupt_speech():
+    global interrupt_requested
+
+    interrupt_requested = True
+
+    # stop currently playing audio
+    sd.stop()
+    
+    # clear queued speech
+    while not speech_queue.empty():
+        try:
+            speech_queue.get_nowait()
+            speech_queue.task_done()
+        except queue.Empty:
+            break
+    # acknowledge interruption
+    speech_queue.put("Alright go ahead, what would you like to ask?")
 
 def speak(text):
     """Add speech to playback queue"""

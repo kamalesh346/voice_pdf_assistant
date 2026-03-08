@@ -2,7 +2,7 @@ from audio import record_audio, speech_to_text
 from rag import generate_answer_stream, load_or_create_index, load_conversation, save_conversation
 from pathlib import Path
 import time
-
+from tts import interrupt_speech
 
 def retrieve_context(question, retriever):
     docs = retriever.invoke(question)
@@ -63,6 +63,12 @@ while True:
     if mode == "v":
 
         question = process_voice_input()
+        interrupt_words = ["stop", "wait", "hold on", "cancel"]
+
+        if any(word in question for word in interrupt_words):
+            print("Interrupt detected")
+            interrupt_speech()
+            continue
 
     else:
 

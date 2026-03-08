@@ -27,7 +27,7 @@ CHUNK_SIZE = 512   # 1024
 
 # speech detection parameters
 VOICE_THRESHOLD = 0.2  # Adjust this threshold based on your microphone sensitivity and environment noise level
-SILENCE_SECONDS = 2.2   # 2
+SILENCE_SECONDS = 2   # 2
 MIN_SPEECH_SECONDS = 0.6
 
 
