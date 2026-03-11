@@ -1,4 +1,4 @@
-# 🚀 VOICE PDF ASSISTANT - PERFORMANCE OPTIMIZATIONS
+# 🚀 VOICE PDF ASSISTANT
 
 ## Overview
 Your voice PDF assistant has been optimized from a **sequential pipeline** to a **parallel processing architecture**, achieving **30-40% performance improvement**.
